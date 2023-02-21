@@ -15,4 +15,4 @@
 
 ## Quantum Internet
 
- Implement a simulated version of 2-steps entanglement purification.
+ Implemention of a simulated version of 2-steps entanglement purification.
