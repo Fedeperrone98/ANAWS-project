@@ -14,7 +14,7 @@ import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
 
-public class FlowReservation implements IFloodlightModule, IOFMessageListener {
+public class FlowReservation implements IFloodlightModule, IOFMessageListener, IFlowReservationREST {
 
 	@Override
 	public String getName() {
