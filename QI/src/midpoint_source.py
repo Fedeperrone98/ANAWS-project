@@ -19,7 +19,7 @@ def get_EPS_connection(p_m, p_lr, t_clock, length):
                                         status=ns.components.qsource.SourceStatus.OFF) # all'inizio della simulazione il QSource è disabilitato
 
     # create the left and right channels
-    delay_model = ns.components.models.FibreDelayModel() # il elay verrà calcolato in base allo specifico valore di lenght
+    delay_model = ns.components.models.FibreDelayModel() # il delay verrà calcolato in base allo specifico valore di lenght
     # netsquid ha una classe specifica per modellare la perdita di segnale della fibra ottica
     loss_model = ns.components.models.FibreLossModel(p_loss_init=1. - p_lr, p_loss_length=0.)
     noise_model = ns.components.models.DepolarNoiseModel(depolar_rate=0.1, time_independent=True)
