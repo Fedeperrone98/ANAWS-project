@@ -70,4 +70,15 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 
 	}
 
+	// get current network state
+	public Map<String, String> getNetworkState() {
+		return null;
+	}
+
+	// reserve flow path
+	public boolean subscribeFlow(String dest, float dataLoad) {
+		// check if path available
+		return false;
+	}
+
 }

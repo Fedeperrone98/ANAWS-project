@@ -9,14 +9,23 @@ public class FlowReservationWebRoutable implements RestletRoutable {
 
 	@Override
 	public Restlet getRestlet(Context context) {
-		// TODO Auto-generated method stub
-		return null;
+		Router router = new Router(context);
+
+		// add resources to expose
+		
+		// this resource ask for a flow reservation
+		router.attach("/network/flow/json", SubscribeFlow.class);
+
+		// this resource will show the current state of the network (with reserved paths)
+		router.attach("/network/state/json", GetNetworkState.class);
+
+		return router;
 	}
 
 	@Override
 	public String basePath() {
-		// TODO Auto-generated method stub
-		return null;
+		// Root path for the resources
+		return "/dc";
 	}
 
 }
