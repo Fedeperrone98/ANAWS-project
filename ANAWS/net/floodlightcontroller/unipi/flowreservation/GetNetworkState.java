@@ -7,7 +7,7 @@ import org.restlet.resource.ServerResource;
 
 public class GetNetworkState extends ServerResource {
 	@Get("json")
-	public Map<String, String> get() {
+	public Map<String, String> getState() {
 		IFlowReservationREST fr =
 					(IFlowReservationREST)getContext().getAttributes()
 					.get(IFlowReservationREST.class.getCanonicalName());

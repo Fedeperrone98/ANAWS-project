@@ -1,8 +1,12 @@
 package net.floodlightcontroller.unipi.flowreservation;
 
+import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
 import java.io.IOException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SubscribeFlow extends ServerResource {
     
