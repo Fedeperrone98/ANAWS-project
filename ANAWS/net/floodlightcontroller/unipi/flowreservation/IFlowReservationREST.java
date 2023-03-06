@@ -1,4 +1,4 @@
-package net.floodlightcontroller.unipi.anaws.flowreservation;
+package net.floodlightcontroller.unipi.flowreservation;
 
 import net.floodlightcontroller.core.module.IFloodlightService;
 

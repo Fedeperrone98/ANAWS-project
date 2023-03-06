@@ -1,7 +1,7 @@
 import sys
 import requests
 
-ip_controller = "8.8.8.8"
+ip_controller = "http://8.8.8.8:8080/dc/network/flow/json"
 
 def do_post_request(ip, dest, data_load):
     my_obj = {"dest": dest, "dataload": data_load}
