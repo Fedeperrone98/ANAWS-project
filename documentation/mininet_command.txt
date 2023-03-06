@@ -1,1 +1,2 @@
 sudo mn --custom topology.py --topo fattree --mac --switch ovsk --controller remote,ip=127.0.0.1,port=6653,protocols=OpenFlow13
+h1 route add -net 0.0.0.0/32 dev h1-eth0
