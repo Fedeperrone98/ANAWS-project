@@ -34,7 +34,7 @@ public class SubscribeFlow extends ServerResource {
 
 			IFlowReservationREST fr = (IFlowReservationREST)getContext().getAttributes()
 					.get(IFlowReservationREST.class.getCanonicalName());
-			boolean res = fr.subscribeFlow(dest, dataLoad, src_ip);
+			boolean res = fr.subscribeFlow(dest_ip, dataLoad, src_ip);
 			if (!res) {
 				return new String("Reservation requested denied: No path available");
 			}

@@ -187,7 +187,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 	public boolean subscribeFlow(IPv4Address dest, float dataLoad, IPv4Address src) {
 
 		logREST.info("Received request for subscribiscription of a new flow:" +
-					 " from {}, to {}, dataload={}GB", src, dest, dataLoad);
+					 " from {}, to {}", src, dest);
 
 		// check if path available
 		return false;
