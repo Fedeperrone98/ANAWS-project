@@ -1,5 +1,6 @@
 package net.floodlightcontroller.unipi.flowreservation;
 
+import org.projectfloodlight.openflow.types.IPv4Address;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
@@ -26,11 +27,14 @@ public class SubscribeFlow extends ServerResource {
 			// Get the field hardtimeout
 			//int newValue = Integer.parseInt(root.get("hardtimeout").asText());
 			String dest = root.get("dest").asText();
+			IPv4Address dest_ip = IPv4Address.of(dest);
 			float dataLoad = Float.parseFloat(root.get("dataload").asText());
-			
+			String src = getClientInfo().getAddress();
+			IPv4Address src_ip = IPv4Address.of(src);
+
 			IFlowReservationREST fr = (IFlowReservationREST)getContext().getAttributes()
 					.get(IFlowReservationREST.class.getCanonicalName());
-			boolean res = fr.subscribeFlow(dest, dataLoad);
+			boolean res = fr.subscribeFlow(dest, dataLoad, src_ip);
 			if (!res) {
 				return new String("Reservation requested denied: No path available");
 			}
