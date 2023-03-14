@@ -15,7 +15,11 @@ xterm $src
 
 #generation of a file with dimension dataload GB
 dataload += "G"
-$ truncate -s $dataload test.txt
+truncate -s $dataload test.txt
+
+#configure host to send out traffic for external networks
+interface = $src + "-eth0"
+route add -net 0.0.0.0/32 dev $interface
 
 #execute python script
 res = $(python3 demo.py $dest $dataload)
