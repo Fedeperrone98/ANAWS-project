@@ -12,5 +12,5 @@ public interface IFlowReservationREST extends IFloodlightService {
     // get current network state
     public Map<String, String> getNetworkState();
     // reserve flow path
-    public boolean subscribeFlow(IPv4Address dest, float dataLoad, IPv4Address src);
+    public boolean subscribeFlow(IPv4Address src, IPv4Address dest, float dataLoad);
 }

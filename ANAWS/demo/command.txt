@@ -1,0 +1,16 @@
+Start mininet topology
+sudo mn --custom topology.py --topo fattree --mac --switch ovsk --controller remote,ip=127.0.0.1,port=6653,protocols=OpenFlow13
+
+Make post request to controller -> to subscribe a new flow 
+From laptop
+http://192.168.56.103:8080/dc/network/reserve/flow/json
+src 
+dest
+dataload
+From mininet (if reservation of new flow succed)
+xterm src_id
+truncate -s dataloadG test.txt
+scp -v ~/test.txt root@$dest:~/test.txt
+
+Make get request to controller -> to get the network status
+http://192.168.56.103:8080/dc/network/get/state/json

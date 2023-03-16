@@ -24,17 +24,20 @@ public class SubscribeFlow extends ServerResource {
 		try {
 			JsonNode root = mapper.readTree(fmJson);
 			
-			// Get the field hardtimeout
-			//int newValue = Integer.parseInt(root.get("hardtimeout").asText());
-			String dest = root.get("dest").asText();
-			IPv4Address dest_ip = IPv4Address.of(dest);
-			float dataLoad = Float.parseFloat(root.get("dataload").asText());
-			String src = getClientInfo().getAddress();
+			// Get the field source address
+			String src = root.get("src").asText();
 			IPv4Address src_ip = IPv4Address.of(src);
 
+			// Get the field destination address
+			String dest = root.get("dest").asText();
+			IPv4Address dest_ip = IPv4Address.of(dest);
+
+			// Get the field dataload
+			float dataLoad = Float.parseFloat(root.get("dataload").asText());
+			
 			IFlowReservationREST fr = (IFlowReservationREST)getContext().getAttributes()
 					.get(IFlowReservationREST.class.getCanonicalName());
-			boolean res = fr.subscribeFlow(dest_ip, dataLoad, src_ip);
+			boolean res = fr.subscribeFlow(src_ip, dest_ip, dataLoad);
 			if (!res) {
 				return new String("Reservation requested denied: No path available");
 			}
