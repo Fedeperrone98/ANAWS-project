@@ -15,5 +15,7 @@ xterm src_id
 truncate -s dataloadG test.txt
 scp -v ~/test.txt root@$dest:~/test.txt
 
-Make get request to controller -> to get the network status
-http://192.168.56.103:8080/dc/network/get/state/json
+Make get request to controller -> to get the reserved links
+http://192.168.56.103:8080/dc/network/get/reserved/links/json
+Make get request to controller -> to get the reserved host-to-host flow
+http://192.168.56.103:8080/dc/network/get/h2h/flow/json
