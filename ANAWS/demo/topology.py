@@ -38,20 +38,20 @@ class FatTree(Topo):
                 aggrThis = self.addSwitch('as_{}_{}'.format(pod, aggr), dpid='{:06X}{:02X}{:02X}'.format(1, pod, aggr))
                 aggrSwitches.append(aggrThis)
                 for x in range((K/2)*aggr, (K/2)*(aggr+1)):
-                    self.addLink(aggrThis, coreSwitches[x])
+                    self.addLink(aggrThis, coreSwitches[x], bw=800)
 
         # Edge
             for edge in range(0, edgeSwitchNum/podNum):
                 edgeThis = self.addSwitch('es_{}_{}'.format(pod, edge), dpid='{:06X}{:02X}{:02X}'.format(2, pod, edge))
                 edgeSwitches.append(edgeThis)
                 for x in range((edgeSwitchNum/podNum)*pod, ((edgeSwitchNum/podNum)*(pod+1))):
-                    self.addLink(edgeThis, aggrSwitches[x])
+                    self.addLink(edgeThis, aggrSwitches[x], bw=800)
 
         # Host
                 for x in range(0, (hostNum/podNum/(edgeSwitchNum/podNum))):
                     mac = '02:00:00:{:02}:{:02}:{:02}'.format(pod, edge, x)
                     host = self.addHost('h_{}_{}_{}'.format(pod, edge, x), mac=mac, ip='10.{}.{}.{}'.format(pod, edge, x+1))
-                    self.addLink(edgeThis, host)
+                    self.addLink(edgeThis, host, bw=800)
 
 
 topos = { 'fattree': ( lambda: FatTree() ) }

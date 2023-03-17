@@ -1,5 +1,5 @@
 Start mininet topology
-sudo mn --custom topology.py --topo fattree --mac --switch ovsk --controller remote,ip=127.0.0.1,port=6653,protocols=OpenFlow13
+sudo mn --custom topology.py --topo fattree --mac --switch ovsk --controller remote,ip=127.0.0.1,port=6653,protocols=OpenFlow13 --link=tc
 pingall
 
 Make post request to controller -> to subscribe a new flow 
