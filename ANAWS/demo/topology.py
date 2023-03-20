@@ -28,21 +28,21 @@ class FatTree(Topo):
 
         # Core
         for core in range(0, coreSwitchNum):
-            coreThis = self.addSwitch('cs_{}'.format(core), dpid='{:010X}'.format(core+1))
+            coreThis = self.addSwitch('cs_{}'.format(core), dpid='{:010X}'.format(core+1), protocols='OpenFlow13')
             coreSwitches.append(coreThis)
 
         # Pod
         for pod in range(0, podNum):
         # Aggregate
             for aggr in range(0, aggrSwitchNum/podNum):
-                aggrThis = self.addSwitch('as_{}_{}'.format(pod, aggr), dpid='{:06X}{:02X}{:02X}'.format(1, pod, aggr))
+                aggrThis = self.addSwitch('as_{}_{}'.format(pod, aggr), dpid='{:06X}{:02X}{:02X}'.format(1, pod, aggr), protocols='OpenFlow13')
                 aggrSwitches.append(aggrThis)
                 for x in range((K/2)*aggr, (K/2)*(aggr+1)):
                     self.addLink(aggrThis, coreSwitches[x], bw=800)
 
         # Edge
             for edge in range(0, edgeSwitchNum/podNum):
-                edgeThis = self.addSwitch('es_{}_{}'.format(pod, edge), dpid='{:06X}{:02X}{:02X}'.format(2, pod, edge))
+                edgeThis = self.addSwitch('es_{}_{}'.format(pod, edge), dpid='{:06X}{:02X}{:02X}'.format(2, pod, edge), protocols='OpenFlow13')
                 edgeSwitches.append(edgeThis)
                 for x in range((edgeSwitchNum/podNum)*pod, ((edgeSwitchNum/podNum)*(pod+1))):
                     self.addLink(edgeThis, aggrSwitches[x], bw=800)
