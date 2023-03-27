@@ -27,3 +27,6 @@ py post_request.py src_ip src_mac dest_ip dest_mac data_load
 Execute shell sript 
 ./send_file.sh -d dest_ip -f file_send.txt 
 ./recv_file.sh -f file_rcv.txt
+
+Generate a file
+truncate -s 2G file.txt
