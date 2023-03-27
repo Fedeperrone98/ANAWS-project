@@ -17,8 +17,14 @@ public class FlowReservationWebRoutable implements RestletRoutable {
 		// this resource ask for a flow reservation
 		router.attach("/network/reserve/flow/json", SubscribeFlow.class);
 
-		// this resource will show the current state of the network (with reserved paths)
-		router.attach("/network/get/state/json", GetNetworkState.class);
+		// this resource will show the reserved links of the network
+		router.attach("/network/get/reserved/links/json", GetLinksState.class);
+
+		// this resource will show the reserved paths of the network
+		router.attach("/network/get/reserved/paths/json", GetPathsState.class);
+
+		// this resource will show the reserved host-to-host flow
+		router.attach("/network/get/h2h/flow/json", GetH2HFlow.class);
 
 		return router;
 	}

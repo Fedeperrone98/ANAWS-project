@@ -13,10 +13,6 @@ srcMac
 destIp
 destMac
 dataload
-From mininet (if reservation of new flow succed)
-xterm src_id
-truncate -s dataloadG test.txt
-scp -v ~/test.txt root@$dest:~/test.txt
 
 Make get request to controller -> to get the reserved links
 http://192.168.56.103:8080/dc/network/get/reserved/links/json
