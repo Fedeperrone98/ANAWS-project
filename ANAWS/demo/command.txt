@@ -23,6 +23,7 @@ http://192.168.56.103:8080/dc/network/get/h2h/flow/json
 
 Execute post_request.py
 py post_request.py src_ip src_mac dest_ip dest_mac data_load
+py post_request.py 10.0.0.1 02:00:00:00:00:00 10.1.0.1 02:00:00:01:00:00 0.5
 
 Execute shell sript 
 ./send_file.sh -d dest_ip -f file_send.txt 

@@ -10,8 +10,6 @@ import java.util.Map;
 import org.projectfloodlight.openflow.protocol.OFFactory;
 import org.projectfloodlight.openflow.protocol.OFFlowAdd;
 import org.projectfloodlight.openflow.protocol.OFFlowDelete;
-import org.projectfloodlight.openflow.protocol.OFFlowRemoved;
-import org.projectfloodlight.openflow.protocol.OFFlowRemovedReason;
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFType;
 import org.projectfloodlight.openflow.protocol.action.OFActionOutput;
@@ -74,7 +72,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 
 	private final static int BANDWIDTH_HARDCODED = (int) (800 * Math.pow(2, 20)); //800Mb
 
-	private final static double MIN_THRESHOLD = 1.002;
+	private final static double MIN_THRESHOLD = 1.001;
 
 	Map<IPv4Address, List<Link>> reservedPaths = new HashMap<>(); // reserved paths of the network
 	List<Link> reservedLinks = new ArrayList<>(); // reserved links of the network
@@ -97,13 +95,13 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 		return false;
 	}
 
-	protected void deallocateH2HFlow(IPv4Address src_ip, List<NodePortTuple> switches, Match match) {
+	protected void deallocateH2HFlow(IPv4Address src_ip, List<NodePortTuple> switches, Match match, Match match_ack) {
 		
 		// update data structure to remove the links of the h2h flow
 		removePath(src_ip);
 		
 		// delete flow rules of all the switches of the path
-		removeFlowRules(switches, match);
+		removeFlowRules(switches, match, match_ack);
 		return;
 	}
 
@@ -130,7 +128,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 	}
 	
 	// delete flow rules of all the switches of the path
-	protected void removeFlowRules(List<NodePortTuple> switches, Match match) {
+	protected void removeFlowRules(List<NodePortTuple> switches, Match match, Match match_ack) {
 		
 		for (int i = 0; i < switches.size(); i++) {
 
@@ -140,15 +138,28 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 			
 			OFFactory factory = srcSwitch.getOFFactory();
 
-			OFFlowDelete flowDel = factory.buildFlowDelete()
-								.setMatch(match)
-								.setIdleTimeout(0)
-								.setHardTimeout(0)
-								.setPriority(FlowModUtils.PRIORITY_MAX)
-								.setBufferId(OFBufferId.NO_BUFFER)
-								.build();
-						
-			srcSwitch.write(flowDel);
+			if (i%2 == 0 || i == switches.size() - 1) {	
+				OFFlowDelete flowDel = factory.buildFlowDelete()
+									.setMatch(match)
+									.setIdleTimeout(0)
+									.setHardTimeout(0)
+									.setPriority(FlowModUtils.PRIORITY_MAX)
+									.setBufferId(OFBufferId.NO_BUFFER)
+									.build();
+							
+				srcSwitch.write(flowDel);
+			}
+			if (i == 0 || i%2 == 1) {
+				OFFlowDelete flowDel_ack = factory.buildFlowDelete()
+									.setMatch(match_ack)
+									.setIdleTimeout(0)
+									.setHardTimeout(0)
+									.setPriority(FlowModUtils.PRIORITY_MAX)
+									.setBufferId(OFBufferId.NO_BUFFER)
+									.build();
+							
+				srcSwitch.write(flowDel_ack);
+			}
 		}
 		log.info("Flow rules removed correctly");
 		return;
@@ -273,8 +284,9 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 		return temp;
 	}
 
-	// install flow rules on the switches along the path
-	private void installFlowRules(Path path, IPv4Address src_ip, MacAddress src_mac, MacAddress dest_mac, float dataload, SwitchPort destEdgeSwitchPort) {
+	// install flow rules on the switches belonging to the path
+	private void installFlowRules(Path path, IPv4Address src_ip, MacAddress src_mac, MacAddress dest_mac, float dataload, 
+									SwitchPort destEdgeSwitchPort, SwitchPort srcEdgeSwitchPort) {
 		
 		// enable the collection of statistics
 		statisticsService.collectStatistics(true);
@@ -285,46 +297,91 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 		List<NodePortTuple> switches = path.getPath();
 
 		Match match = null;
-		// iterate along the switches of the path
+		Match match_ack = null;
+		// iterate over the switches of the path
 		for (int i = 0; i < switches.size(); i++) {
 
-			// retrieve IOFSwitch and OFport of the src switch of each link of the path
-			NodePortTuple src = switches.get(i);
-			IOFSwitch srcSwitch = switchService.getSwitch(src.getNodeId());
-			OFPort srcPort = src.getPortId();
+			if (i%2 == 0 || i == switches.size() - 1) {	
+				// retrieve IOFSwitch and OFport of the src switch of each link of the path
+				NodePortTuple src = switches.get(i);
+				IOFSwitch srcSwitch = switchService.getSwitch(src.getNodeId());
+				OFPort srcPort = src.getPortId();
 
-			// build match: if the srcSwitch receives a packet coming from src_mac and addressed to dest_mac
-			OFFactory factory = srcSwitch.getOFFactory();
-			match = factory.buildMatch()
-						.setExact(MatchField.ETH_SRC, src_mac)
-						.setExact(MatchField.ETH_DST, dest_mac)
-						.build();
+				// build match: if the srcSwitch receives a packet coming from src_mac and addressed to dest_mac
+				OFFactory factory = srcSwitch.getOFFactory();
+				match = factory.buildMatch()
+							.setExact(MatchField.ETH_SRC, src_mac)
+							.setExact(MatchField.ETH_DST, dest_mac)
+							.build();
 
-			
-			OFActions actions = factory.actions();
-			OFActionOutput output = null;
-			if ( i == switches.size() - 1) {
-				// the packet must be sent to destPort (output port of the destSwitch)
-				output = actions.buildOutput()
-								.setPort(destEdgeSwitchPort.getPortId())
-								.build();
-			} else {
-				// the packet must be sent to srcPort (output port of the srcSwitch)
-				output = actions.buildOutput()
-								.setPort(srcPort)
-								.build();
-			}			
+				
+				OFActions actions = factory.actions();
+				OFActionOutput output = null;
+				if (i == switches.size() - 1) {
+					// the packet must be sent to destPort (output port of the destSwitch)
+					output = actions.buildOutput()
+									.setPort(destEdgeSwitchPort.getPortId())
+									.build();
+				} else {
+					// the packet must be sent to srcPort (output port of the srcSwitch)
+					output = actions.buildOutput()
+									.setPort(srcPort)
+									.build();
+				}			
 
-			OFFlowAdd flowAdd = factory.buildFlowAdd()
-								.setMatch(match)
-								.setActions(Collections.singletonList(output))
-								.setIdleTimeout(0)
-								.setHardTimeout(0)
-								.setPriority(FlowModUtils.PRIORITY_MAX)
-								.setBufferId(OFBufferId.NO_BUFFER)
-								.build();
+				OFFlowAdd flowAdd = factory.buildFlowAdd()
+									.setMatch(match)
+									.setActions(Collections.singletonList(output))
+									.setIdleTimeout(0)
+									.setHardTimeout(0)
+									.setPriority(FlowModUtils.PRIORITY_MAX)
+									.setBufferId(OFBufferId.NO_BUFFER)
+									.build();
+									
+				srcSwitch.write(flowAdd);
+			}
 						
-			srcSwitch.write(flowAdd);
+			// creation of flow entry for the reverse path
+			if (i == 0 || i%2 == 1) {
+				
+				NodePortTuple src_ack = switches.get(i);
+				IOFSwitch srcSwitch_ack = switchService.getSwitch(src_ack.getNodeId());
+				OFPort srcPort_ack = src_ack.getPortId();
+				
+				// match for the reverse path
+				OFFactory factory = srcSwitch_ack.getOFFactory();
+				match_ack = factory.buildMatch()
+								.setExact(MatchField.ETH_SRC, dest_mac)
+								.setExact(MatchField.ETH_DST, src_mac)
+								.build();
+				
+				OFActions actions_ack = factory.actions();
+				OFActionOutput output_ack = null;
+				if (i == 0) {
+					// the packet must be sent to input port of the first srcSwitch
+					output_ack = actions_ack.buildOutput()
+									.setPort(srcEdgeSwitchPort.getPortId())
+									.build();
+				} else {
+					
+					// the packet must be sent to the source port of the previous switch
+					output_ack = actions_ack.buildOutput()
+									.setPort(srcPort_ack)
+									.build();
+				}			
+
+				OFFlowAdd flowAdd_ack = factory.buildFlowAdd()
+									.setMatch(match_ack)
+									.setActions(Collections.singletonList(output_ack))
+									.setIdleTimeout(0)
+									.setHardTimeout(0)
+									.setPriority(FlowModUtils.PRIORITY_MAX)
+									.setBufferId(OFBufferId.NO_BUFFER)
+									.build();
+
+				srcSwitch_ack.write(flowAdd_ack);
+			}
+			
 		}
 
 		// start a thread that is responsible to monitor the traffic of this specific path
@@ -340,7 +397,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 		} else {
 			sec = (int) Math.ceil(dataload_in_bit/BANDWIDTH_HARDCODED);
 		}
-		Thread t = new Thread(new TrafficMonitor(src_ip, src_mac, dest_mac, dataload, sec, match, switches));
+		Thread t = new Thread(new TrafficMonitor(src_ip, src_mac, dest_mac, dataload, sec, match, match_ack, switches));
 		t.start();
 	}
 
@@ -419,7 +476,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 			for (Path path: paths) {
 				available = true;
 				List<NodePortTuple> switchPorts = path.getPath(); // List of switch + port belonging to path
-				for (NodePortTuple switchPort : switchPorts) { // iterate on the switches of the path
+				for (NodePortTuple switchPort : switchPorts) { // iterate over the switches of the path
 					for (Link link : reservedLinks) {
 						NodePortTuple src = new NodePortTuple(link.getSrc(), link.getSrcPort()); // src node of the reserved link
 						NodePortTuple dest = new NodePortTuple(link.getDst(), link.getDstPort()); // dest node of the reserved link
@@ -447,7 +504,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 					reservedPaths.put(src_ip, temp);
 					
 					// install flow rules on the switches along the path
-					installFlowRules(path, src_ip, src_mac, dest_mac, dataLoad, destEdgeSwitches[0]);
+					installFlowRules(path, src_ip, src_mac, dest_mac, dataLoad, destEdgeSwitches[0], srcEdgeSwitches[0]);
 
 					logREST.info("Path reserved correctly");
 					return 0; // path reserved correctly
@@ -468,15 +525,17 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 		float dataload;
 		long millisec; // estimated milliseconds needed to delivery the file to destination
 		Match match; // match to this specific path
+		Match match_ack;
 		List<NodePortTuple> switches;
 
-		TrafficMonitor(IPv4Address src_ip, MacAddress src, MacAddress dest, float dataload, int sec, Match match, List<NodePortTuple> switches) {
+		TrafficMonitor(IPv4Address src_ip, MacAddress src, MacAddress dest, float dataload, int sec, Match match, Match match_ack, List<NodePortTuple> switches) {
 			this.src_ip = src_ip;
 			this.src_mac = src;
 			this.dest_mac = dest;
 			this.dataload = dataload;
 			this.millisec = sec * 1000;
 			this.match = match;
+			this.match_ack = match_ack;
 			this.switches = switches;
 
 		}
@@ -487,7 +546,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 				log.info("Wait enough time to deliver file to destination");
 				Thread.sleep(this.millisec);
 			} catch (InterruptedException e) {
-				deallocateH2HFlow(src_ip, this.switches, this.match);
+				deallocateH2HFlow(src_ip, this.switches, this.match, this.match_ack);
 				e.printStackTrace();
 			}
 
@@ -513,7 +572,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 						// the statistcs are collected every 11 sec
 						Thread.sleep(11100);
 					} catch (InterruptedException e) {
-						deallocateH2HFlow(src_ip, this.switches, this.match);
+						deallocateH2HFlow(src_ip, this.switches, this.match, this.match_ack);
 						e.printStackTrace();
 					}
 					
@@ -538,13 +597,13 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 						Thread.sleep(PERIODIC_CHECK*1000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
-						deallocateH2HFlow(src_ip, this.switches, this.match);
+						deallocateH2HFlow(src_ip, this.switches, this.match, this.match_ack);
 					}
 				}
 
 			}
 			log.info("Deallocate h2h flow");
-			deallocateH2HFlow(src_ip, this.switches, this.match);
+			deallocateH2HFlow(src_ip, this.switches, this.match, this.match_ack);
 		}
 	}
 }
