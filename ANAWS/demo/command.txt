@@ -1,0 +1,33 @@
+Start mininet topology
+sudo mn --custom topology.py --topo fattree --mac --switch ovsk --controller remote,ip=127.0.0.1,port=6653,protocols=OpenFlow13 --link=tc
+pingall
+
+Open controller ui 
+http://192.168.56.103:8080/ui/pages/index.html
+
+Make post request to controller -> to subscribe a new flow 
+From laptop
+http://192.168.56.103:8080/dc/network/reserve/flow/json
+srcIp
+srcMac
+destIp
+destMac
+dataload
+
+Make get request to controller -> to get the reserved links
+http://192.168.56.103:8080/dc/network/get/reserved/links/json
+Make get request to controller -> to get the reserved paths
+http://192.168.56.103:8080/dc/network/get/reserved/paths/json
+Make get request to controller -> to get the reserved host-to-host flow
+http://192.168.56.103:8080/dc/network/get/h2h/flow/json
+
+Execute post_request.py
+python post_request.py src_ip src_mac dest_ip dest_mac data_load
+python post_request.py 10.0.0.1 02:00:00:00:00:00 10.1.0.1 02:00:00:01:00:00 0.5
+
+Execute shell sript 
+./send_file.sh -d dest_ip -f file_send.txt 
+./recv_file.sh -f file_rcv.txt
+
+Generate a file
+truncate -s 2G file.txt
