@@ -70,9 +70,9 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 	// number of paths to calculate every time an user subscribe a new h2h flow
 	private final static int PATHS_NUMBER = 20;
 
-	private final static int BANDWIDTH_HARDCODED = (int) (800 * Math.pow(2, 20)); //800Mb
+	private final static int BANDWIDTH_HARDCODED = (int) (800 * Math.pow(2, 20)); //800Mbps
 
-	private final static double MIN_THRESHOLD = 1.001;
+	private final static double MIN_THRESHOLD = 1.0025;
 
 	Map<IPv4Address, List<Link>> reservedPaths = new HashMap<>(); // reserved paths of the network
 	List<Link> reservedLinks = new ArrayList<>(); // reserved links of the network
@@ -552,6 +552,9 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 
 			log.info("Retrieve statistics of the last switch of the path with src_ip {}", src_ip);
 
+			int count = 0;
+			float prev_byte_delivered = 0;
+
 			while (true) {
 				Map<Pair<Match, DatapathId>, FlowRuleStats> all_statistics = statisticsService.getFlowStats();
 
@@ -587,7 +590,13 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 				log.info("packets: {}", packets);
 
 				double dataload_in_byte = this.dataload * Math.pow(2, 30);
-				if ((bytes_delivered > dataload_in_byte * MIN_THRESHOLD)) {
+				if (prev_byte_delivered < bytes_delivered) {
+					prev_byte_delivered = bytes_delivered;
+				} else if (prev_byte_delivered == bytes_delivered) {
+					count++;
+				}
+
+				if ((bytes_delivered > dataload_in_byte * MIN_THRESHOLD) || count >= 5) {
 						log.info("File delivered to the destination");
 						break;
 					
