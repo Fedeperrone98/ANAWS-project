@@ -72,7 +72,7 @@ public class FlowReservation implements IFloodlightModule, IOFMessageListener, I
 
 	private final static int BANDWIDTH_HARDCODED = (int) (800 * Math.pow(2, 20)); //800Mbps
 
-	private final static double MIN_THRESHOLD = 1.0025;
+	private final static double MIN_THRESHOLD = 1.003;
 
 	Map<IPv4Address, List<Link>> reservedPaths = new HashMap<>(); // reserved paths of the network
 	List<Link> reservedLinks = new ArrayList<>(); // reserved links of the network
