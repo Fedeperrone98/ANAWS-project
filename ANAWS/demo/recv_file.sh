@@ -6,7 +6,7 @@ OPTIONS=hp:f:
 
 usage() {
 cat << EOF
-Send a file using netcat
+Receive a file using netcat
 
 -h          help
 -p          source port number (defaul 1234)
